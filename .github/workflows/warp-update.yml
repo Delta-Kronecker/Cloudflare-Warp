@@ -1,0 +1,43 @@
+name: Cloudflare WARP Auto-Update
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0  * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  update-warp-configs:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Install dependencies
+      run: pip install selenium requests
+
+    - name: Run downloader script
+      env:
+        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      run: python warp_downloader.py
+
+    - name: Commit and push final zip
+      run: |
+        git config --global user.name "GitHub Action Bot"
+        git config --global user.email "action@github.com"
+        if [ -f "cloudflare-warp.zip" ]; then
+          git add cloudflare-warp.zip
+          git commit -m "🔄 Update Cloudflare WARP configs [$(date -u)]" || echo "No changes to commit"
+          git push
+        else
+          echo "No zip file created"
+        fi
