@@ -12,7 +12,6 @@ from selenium.webdriver.chrome.options import Options
 
 # Constants
 TEMP_DIR = os.path.join(os.getcwd(), "temp_downloads")
-FINAL_ZIP = "cloudflare-warp.zip"
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 
@@ -94,28 +93,17 @@ class WarpGeneratorDownloader:
                 pass
             return False
 
-    def create_zip_in_temp(self, zip_name):
+    def create_zip(self, zip_name):
         files = [f for f in os.listdir(TEMP_DIR) if os.path.isfile(os.path.join(TEMP_DIR, f))]
         if not files:
             print(f"No files for {zip_name}")
             return None
-        zip_path = os.path.join(TEMP_DIR, zip_name)
+        zip_path = os.path.join(os.getcwd(), zip_name)
         with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
             for f in files:
                 zf.write(os.path.join(TEMP_DIR, f), arcname=f)
         print(f"Created {zip_name} with {len(files)} files")
-        for f in files:
-            os.remove(os.path.join(TEMP_DIR, f))
         return zip_path
-
-    def create_final_zip(self, sub_zips):
-        final_path = os.path.join(os.getcwd(), FINAL_ZIP)
-        with zipfile.ZipFile(final_path, 'w', zipfile.ZIP_DEFLATED) as zf:
-            for sz in sub_zips:
-                if sz and os.path.exists(sz):
-                    zf.write(sz, arcname=os.path.basename(sz))
-        print(f"Created {FINAL_ZIP} with {len(sub_zips)} archives")
-        return final_path
 
     def send_to_telegram(self, file_path, caption):
         if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
@@ -129,7 +117,7 @@ class WarpGeneratorDownloader:
                     files={'document': f}
                 )
             if response.status_code == 200:
-                print("File sent to Telegram")
+                print(f"Sent {os.path.basename(file_path)} to Telegram")
             else:
                 print(f"Telegram error: {response.text}")
         except Exception as e:
@@ -158,7 +146,12 @@ class WarpGeneratorDownloader:
                         self.human_pause(4, 6)
                     except Exception as e:
                         print(f"Error clicking {btn_id}: {e}")
-            amnezia_zip = self.create_zip_in_temp("AmneziaWG.zip")
+            
+            amnezia_zip = self.create_zip("AmneziaWG.zip")
+            
+            # Clear temp directory for next phase
+            for f in os.listdir(TEMP_DIR):
+                os.remove(os.path.join(TEMP_DIR, f))
 
             print("\nReturn to Standard")
             self.change_country("Standard")
@@ -178,23 +171,27 @@ class WarpGeneratorDownloader:
                     self.human_pause(4, 6)
                 except Exception as e:
                     print(f"Error downloading WireSock: {e}")
-            wiresock_zip = self.create_zip_in_temp("WireSock.zip")
+            
+            wiresock_zip = self.create_zip("WireSock.zip")
 
-            # Create final zip with only AmneziaWG and WireSock
-            print("\nCreating final archive")
-            final_zip = self.create_final_zip([amnezia_zip, wiresock_zip])
-
-            # Send to Telegram
-            caption = (
-                "**Cloudflare WARP Configs**\n\n"
+            # Send both files to Telegram
+            print("\nSending files to Telegram...")
+            
+            amnezia_caption = (
+                "**AmneziaWG Configs**\n\n"
                 f"Generated: {time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime())}\n"
-                "Contains:\n"
-                "- AmneziaWG (3 variants per country)\n"
-                "- WireSock (1 per country)\n"
                 f"Countries: {len(COUNTRIES)}\n"
-                "Archived in cloudflare-warp.zip"
+                "3 variants per country"
             )
-            self.send_to_telegram(final_zip, caption)
+            self.send_to_telegram(amnezia_zip, amnezia_caption)
+
+            wiresock_caption = (
+                "**WireSock Configs**\n\n"
+                f"Generated: {time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime())}\n"
+                f"Countries: {len(COUNTRIES)}\n"
+                "1 config per country"
+            )
+            self.send_to_telegram(wiresock_zip, wiresock_caption)
 
             print("\nAll done.")
         finally:
