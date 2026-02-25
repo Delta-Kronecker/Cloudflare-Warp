@@ -3,7 +3,7 @@ name: Cloudflare WARP Auto-Update
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 0  * * *'
+    - cron: '0 */24 * * *'
 
 permissions:
   contents: write
@@ -30,14 +30,15 @@ jobs:
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
       run: python warp_downloader.py
 
-    - name: Commit and push final zip
+    - name: Commit and push zip files
       run: |
         git config --global user.name "GitHub Action Bot"
         git config --global user.email "action@github.com"
-        if [ -f "cloudflare-warp.zip" ]; then
-          git add cloudflare-warp.zip
-          git commit -m "🔄 Update Cloudflare WARP configs [$(date -u)]" || echo "No changes to commit"
+        
+        if [ -f "AmneziaWG.zip" ] || [ -f "WireSock.zip" ]; then
+          git add AmneziaWG.zip WireSock.zip 2>/dev/null || true
+          git commit -m "🔄 Update WARP configs [$(date -u)]" || echo "No changes to commit"
           git push
         else
-          echo "No zip file created"
+          echo "No zip files created"
         fi
