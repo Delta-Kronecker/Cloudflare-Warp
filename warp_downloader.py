@@ -182,7 +182,7 @@ class WarpGeneratorDownloader:
                 f"Generated: {time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime())}\n"
                 f"Countries: {len(COUNTRIES)}\n"
                 "3 variants per country"
-                "Use in the WG Tunnel Android app"
+                " Use in the WG Tunnel Android app"
 
             )
             self.send_to_telegram(amnezia_zip, amnezia_caption)
@@ -192,7 +192,7 @@ class WarpGeneratorDownloader:
                 f"Generated: {time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime())}\n"
                 f"Countries: {len(COUNTRIES)}\n"
                 "1 config per country"
-                "Use in Windows Wiresock program"
+                " Use in Windows Wiresock program"
 
             )
             self.send_to_telegram(wiresock_zip, wiresock_caption)
