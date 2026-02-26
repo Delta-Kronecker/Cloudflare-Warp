@@ -3,7 +3,7 @@ name: Cloudflare WARP Auto-Update
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 */24 * * *'
+    - cron: '0 0 * * *'
 
 permissions:
   contents: write
@@ -35,9 +35,10 @@ jobs:
         git config --global user.name "GitHub Action Bot"
         git config --global user.email "action@github.com"
         
-        if [ -f "AmneziaWG.zip" ] || [ -f "WireSock.zip" ]; then
-          git add AmneziaWG.zip WireSock.zip 2>/dev/null || true
+        if [ -f "WG_Tunnel.zip" ] || [ -f "WireSock.zip" ]; then
+          git add WG_Tunnel.zip WireSock.zip 2>/dev/null || true
           git commit -m "🔄 Update WARP configs [$(date -u)]" || echo "No changes to commit"
+          git pull
           git push
         else
           echo "No zip files created"
