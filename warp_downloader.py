@@ -25,6 +25,7 @@ COUNTRIES = [
     "🇫🇮 Финляндия"
 ]
 
+
 class WarpGeneratorDownloader:
     def __init__(self):
         self.driver = None
@@ -44,7 +45,8 @@ class WarpGeneratorDownloader:
             "profile.default_content_setting_values.automatic_downloads": 1
         }
         options.add_experimental_option("prefs", prefs)
-        options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+        options.add_argument(
+            "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
         options.add_argument("--start-maximized")
         options.add_argument("--headless=new")
         options.add_argument("--no-sandbox")
@@ -113,9 +115,10 @@ class WarpGeneratorDownloader:
             url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendDocument"
             with open(file_path, 'rb') as f:
                 response = requests.post(url,
-                    data={'chat_id': TELEGRAM_CHAT_ID, 'caption': caption, 'parse_mode': 'Markdown'},
-                    files={'document': f}
-                )
+                                         data={'chat_id': TELEGRAM_CHAT_ID, 'caption': caption,
+                                               'parse_mode': 'Markdown'},
+                                         files={'document': f}
+                                         )
             if response.status_code == 200:
                 print(f"Sent {os.path.basename(file_path)} to Telegram")
             else:
@@ -130,8 +133,8 @@ class WarpGeneratorDownloader:
             self.driver.get("https://warp-generator.github.io/warp/")
             self.human_pause(5, 7)
 
-            # Phase 1: AmneziaWG (3 per country)
-            print("\nPhase 1: AmneziaWG")
+            # Phase 1: WG Tunnel (3 per country)
+            print("\nPhase 1: WG Tunnel")
             for idx, country in enumerate(COUNTRIES):
                 print(f"\nProcessing {country}")
                 if idx > 0 and not self.change_country(country):
@@ -146,9 +149,9 @@ class WarpGeneratorDownloader:
                         self.human_pause(4, 6)
                     except Exception as e:
                         print(f"Error clicking {btn_id}: {e}")
-            
-            amnezia_zip = self.create_zip("AmneziaWG.zip")
-            
+
+            WG_Tunnel_zip = self.create_zip("WG-Tunnel.zip")
+
             # Clear temp directory for next phase
             for f in os.listdir(TEMP_DIR):
                 os.remove(os.path.join(TEMP_DIR, f))
@@ -171,28 +174,44 @@ class WarpGeneratorDownloader:
                     self.human_pause(4, 6)
                 except Exception as e:
                     print(f"Error downloading WireSock: {e}")
-            
+
             wiresock_zip = self.create_zip("WireSock.zip")
 
             # Send both files to Telegram
             print("\nSending files to Telegram...")
-            
-            amnezia_caption = (
-                "**AmneziaWG Configs**\n\n"
+
+            WG_Tunnel_caption = (
+                "**WG Tunnel Configs**\n\n"
                 f"Generated: {time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime())}\n"
                 f"Countries: {len(COUNTRIES)}\n"
-                "3 variants per country"
-                " Use in the WG Tunnel Android app"
+                f"3 variants per country\n"
+                f" Use in the WG Tunnel Android app\n"
+                f"For usage instructions, read the repository readme:\n"
+                F"https://github.com/Delta-Kronecker/Cloudflare-Warp"
 
             )
-            self.send_to_telegram(amnezia_zip, amnezia_caption)
+            self.send_to_telegram(WG_Tunnel_zip, WG_Tunnel_caption)
+
+            WireSock_caption = (
+                "**WireSock Configs**\n\n"
+                f"Generated: {time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime())}\n"
+                f"Countries: {len(COUNTRIES)}\n"
+                f"1 config per country\n"
+                f" Use in Windows Wiresock program\n"
+                f"For usage instructions, read the repository readme:\n"
+                F"https://github.com/Delta-Kronecker/Cloudflare-Warp"
+
+            )
+            self.send_to_telegram(wiresock_zip, WireSock_caption)
 
             wiresock_caption = (
                 "**WireSock Configs**\n\n"
                 f"Generated: {time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime())}\n"
                 f"Countries: {len(COUNTRIES)}\n"
-                "1 config per country"
-                " Use in Windows Wiresock program"
+                f"1 config per country"
+                f" Use in Windows Wiresock program"
+                f"For usage instructions, read the repository readme:"
+                f"https://github.com/Delta-Kronecker/Cloudflare-Warp"
 
             )
             self.send_to_telegram(wiresock_zip, wiresock_caption)
@@ -200,6 +219,7 @@ class WarpGeneratorDownloader:
             print("\nAll done.")
         finally:
             self.teardown()
+
 
 if __name__ == "__main__":
     downloader = WarpGeneratorDownloader()
