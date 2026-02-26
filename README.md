@@ -1,8 +1,8 @@
-# Cloudflare WARP Config Generator
+# 🔥 Cloudflare WARP Config Generator
 
 This project automatically downloads and updates Cloudflare WARP configuration files for different protocols and countries. It runs daily via GitHub Actions and pushes the updated configs to this repository and Telegram.
 
-# ⚠️ Important Usage & Security Notice
+# 🔥 Important Usage & Security Notice
 
 - Public configs in this repository are intended **only for normal usage** such as browsing websites and social media.
 - Due to **high public usage and shared access**, these configs may become unstable, rate-limited, or stop working at any time.
@@ -15,9 +15,9 @@ Personal configs generated from your private repository have a higher connection
 
 ---
 
-# 🔐 Private Setup Guide (Step-by-Step)
+# 🔥 Private Setup Guide (Step-by-Step)
 
-## 1️⃣ Fork the Repository
+## 🔥 Fork the Repository
 
 1. Click **Fork** (top-right corner)  
 2. Set repository visibility to **Private**  
@@ -26,7 +26,7 @@ Personal configs generated from your private repository have a higher connection
 ---
 
 
-## 3️⃣ Run the GitHub Workflow
+## 🔥 Run the GitHub Workflow
 
 1. Go to the **Actions** tab  
 2. Select the **Cloudflare WARP Auto-Update** workflow  
@@ -42,7 +42,7 @@ The workflow will:
 
 ---
 
-## 4️⃣ Retrieve Your Configs
+## 🔥 Retrieve Your Configs
 
 After successful execution:
 
@@ -58,7 +58,7 @@ Download the ZIP file and import the configurations into your preferred client:
 ---
 
 
-## 📥 Downloads
+## 🔥 Downloads
 
 The generator creates two separate zip files:
 
@@ -67,7 +67,7 @@ The generator creates two separate zip files:
 | `WG-Tunnel.zip` | WG Tunnel | Android | 3 configuration variants per country |
 | `WireSock.zip` | WireSock | Windows | 1 configuration per country |
 
-## 🌍 Supported Countries
+## 🔥 Supported Countries
 
 - Standard (Default)
 - Lithuania
@@ -77,7 +77,7 @@ The generator creates two separate zip files:
 - Netherlands 2
 - Finland
 
-## 📱 How to Use
+## 🔥 How to Use
 
 ### Android (WG Tunnel)
 
@@ -98,7 +98,7 @@ The generator creates two separate zip files:
 6. Connect to the VPN
 7. For using new configuration, delete the old file from folder and copy the new one
 
-## 🤖 Telegram Channel
+## 🔥 Telegram Channel
 
 All configuration files are automatically sent to our Telegram channel. Join to get instant updates:
 
