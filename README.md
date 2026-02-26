@@ -64,8 +64,8 @@ The generator creates two separate zip files:
 
 | File | Protocol | Platform | Description |
 |------|--|----------|-------------|
-| `WG-Tunnel.zip` | WG Tunnel | Android | 3 configuration variants per country |
-| `WireSock.zip` | WireSock | Windows | 1 configuration per country |
+| [WG-Tunnel.zip](https://github.com/Delta-Kronecker/Cloudflare-Warp/raw/refs/heads/main/WG_Tunnel.zip) | WG Tunnel | Android | 3 configuration variants per country |
+| [WireSock.zip](https://github.com/Delta-Kronecker/Cloudflare-Warp/raw/refs/heads/main/WireSock.zip) | WireSock | Windows | 1 configuration per country |
 
 ## 🔥 Supported Countries
 
