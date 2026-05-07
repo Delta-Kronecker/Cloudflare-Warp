@@ -1,114 +1,81 @@
-import os
-import time
-import random
-import zipfile
-import shutil
-import requests
-import re
+import os, time, random, zipfile, shutil, requests, re
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-# --- User Constants ---
-S1, S2 = 0, 0
-Jc = 4
-Jmin, Jmax = 40, 70
-H1, H2, H3, H4 = 1, 2, 3, 4
-I1 = 0
-
-# အာရှနိုင်ငံများစာရင်း
-COUNTRIES = [
-    "Standard",
-    "Singapore",
-    "Japan",
-    "Hong Kong",
-    "Thailand",
-    "South Korea"
-]
-
+# User Variables
+S1, S2, Jc, Jmin, Jmax = 0, 0, 4, 40, 70
+H1, H2, H3, H4, I1 = 1, 2, 3, 4, 0
+COUNTRIES = ["Standard", "Singapore", "Japan", "Hong Kong", "Thailand", "South Korea"]
 TEMP_DIR = os.path.join(os.getcwd(), "temp_downloads")
-TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
-TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
+TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
+CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 
-class WarpGeneratorDownloader:
+class WarpGenerator:
     def __init__(self):
-        self.driver = None
-        if os.path.exists(TEMP_DIR):
-            shutil.rmtree(TEMP_DIR)
+        if os.path.exists(TEMP_DIR): shutil.rmtree(TEMP_DIR)
         os.makedirs(TEMP_DIR)
-
-    def setup(self):
         options = Options()
         options.add_argument("--headless=new")
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
-        options.add_argument("--disable-blink-features=AutomationControlled")
-        # User-Agent ကို သေသပ်အောင် တစ်ကြောင်းတည်း ထားထားပါတယ်
-        options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-        
-        prefs = {
-            "download.default_directory": TEMP_DIR,
-            "download.prompt_for_download": False,
-            "profile.default_content_setting_values.automatic_downloads": 1
-        }
-        options.add_experimental_option("prefs", prefs)
+        options.add_experimental_option("prefs", {"download.default_directory": TEMP_DIR, "profile.default_content_setting_values.automatic_downloads": 1})
         self.driver = webdriver.Chrome(options=options)
 
-    def patch_configs_to_port_500(self):
-        """Config ဖိုင်များကို Port 500 ဖြစ်အောင် ပြင်ဆင်ခြင်း"""
-        for filename in os.listdir(TEMP_DIR):
-            if filename.endswith(".conf"):
-                filepath = os.path.join(TEMP_DIR, filename)
-                with open(filepath, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                
-                # Endpoint ပြောင်းခြင်းနှင့် မြန်မာလို မှတ်ချက်ထည့်ခြင်း
-                new_content = re.sub(r'Endpoint = .*', 'Endpoint = engage.cloudflareclient.com:500', content)
-                if "#" not in new_content:
-                    new_content = "# ဒါက Port 500 နဲ့ အာရှ Server ဖြစ်ပါတယ်\n" + new_content
-                
-                with open(filepath, 'w', encoding='utf-8') as f:
-                    f.write(new_content)
-
-    def change_country(self, country_name):
+    def change_country(self, name):
         try:
             wait = WebDriverWait(self.driver, 10)
-            settings_btn = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "svg.settings-btn")))
-            settings_btn.click()
+            btn = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "svg.settings-btn")))
+            btn.click()
             time.sleep(2)
-            country_opt = self.driver.find_element(By.XPATH, f"//div[contains(text(), '{country_name}')]")
-            country_opt.click()
+            opt = self.driver.find_element(By.XPATH, f"//div[contains(text(), '{name}')]")
+            opt.click()
             self.driver.find_element(By.CSS_SELECTOR, "span.close").click()
             time.sleep(2)
-            return True
-        except:
-            return False
+        except: pass
 
-    def create_zip(self, zip_name):
-        zip_path = os.path.join(os.getcwd(), zip_name)
-        files = [f for f in os.listdir(TEMP_DIR) if f.endswith(".conf")]
-        if not files: return None
-        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
-            for f in files:
-                zf.write(os.path.join(TEMP_DIR, f), arcname=f)
-        return zip_path
+    def patch_configs(self):
+        for f in os.listdir(TEMP_DIR):
+            if f.endswith(".conf"):
+                p = os.path.join(TEMP_DIR, f)
+                with open(p, 'r', encoding='utf-8') as file:
+                    data = file.read()
+                data = re.sub(r'Endpoint = .*', 'Endpoint = engage.cloudflareclient.com:500', data)
+                data = "# Port 500 Asia Server\n" + data
+                with open(p, 'w', encoding='utf-8') as file:
+                    file.write(data)
 
     def run(self):
         try:
-            self.setup()
             self.driver.get("https://warp-generator.github.io/warp/")
             time.sleep(5)
-
-            # --- Generate Phase ---
-            for country in COUNTRIES:
-                print(f"Generating for: {country}")
-                self.change_country(country)
-                for i in range(H2, Jc + 1): # generateButton 2 မှ 4 အထိ
+            for c in COUNTRIES:
+                self.change_country(c)
+                for i in range(H2, Jc + 1):
                     try:
                         self.driver.find_element(By.ID, f"generateButton{i}").click()
                         time.sleep(random.uniform(Jmin/10, Jmax/10))
+                    except: pass
+            self.patch_configs()
+            z_path = os.path.join(os.getcwd(), "WG-Tunnel.zip")
+            with zipfile.ZipFile(z_path, 'w', zipfile.ZIP_DEFLATED) as z:
+                for f in os.listdir(TEMP_DIR):
+                    z.write(os.path.join(TEMP_DIR, f), arcname=f)
+            shutil.copy(z_path, "WireSock.zip")
+            self.send(z_path, "✅ WG Tunnel (Asia 500)")
+            self.send("WireSock.zip", "✅ WireSock (Asia 500)")
+        finally:
+            self.driver.quit()
+
+    def send(self, p, cap):
+        if TOKEN and CHAT_ID:
+            with open(p, 'rb') as f:
+                requests.post(f"https://api.telegram.org/bot{TOKEN}/sendDocument", data={'chat_id': CHAT_ID, 'caption': cap}, files={'document': f})
+
+if __name__ == "__main__":
+    WarpGenerator().run()
                     except: pass
 
             # Port 500 သို့ ပြင်ဆင်ခြင်း
