@@ -107,30 +107,3 @@ class WarpGeneratorDownloader:
 
 if __name__ == "__main__":
     WarpGeneratorDownloader().run()
-                except:
-                    pass
-
-                for btn_id in ["generateButton2", "generateButton3"]:
-                    try:
-                        self.driver.find_element(By.ID, btn_id).click()
-                        self.human_pause(3, 5)
-                    except: pass
-
-            wg_zip = self.create_zip("WG-Tunnel.zip")
-
-            # Phase 2: WireSock
-            # အချိန်ကုန်သက်သာစေရန်နှင့် သေချာစေရန် WG_Tunnel ထဲကဖိုင်တွေကိုပဲ WireSock နာမည်နဲ့ သိမ်းပေးလိုက်ပါမယ်
-            if wg_zip:
-                wiresock_zip = os.path.join(os.getcwd(), "WireSock.zip")
-                shutil.copy(wg_zip, wiresock_zip)
-                
-                print("Sending to Telegram...")
-                self.send_to_telegram(wg_zip, "✅ **WG Tunnel (Asia + Port 500)**")
-                self.send_to_telegram(wiresock_zip, "✅ **WireSock (Asia + Port 500)**")
-            
-            print("Done!")
-        finally:
-            self.teardown()
-
-if __name__ == "__main__":
-    WarpGeneratorDownloader().run()
