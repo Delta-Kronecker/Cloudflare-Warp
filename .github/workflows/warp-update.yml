@@ -30,12 +30,12 @@ jobs:
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
       run: python warp_downloader.py
 
-    - name: Create WireSock.zip (WG_Tunnel ကို နာမည်ပွားယူခြင်း)
+    - name: Force Update WireSock and WG_Tunnel
       run: |
-        # တကယ်လို့ script က WG_Tunnel.zip ပဲ ထုတ်ပေးတယ်ဆိုရင် WireSock အဖြစ်ပါ ပွားလိုက်မယ်
+        # Script က WG_Tunnel.zip ပဲ ထုတ်ပေးနေလို့ WireSock ပါ Update ဖြစ်အောင် ပွားယူခြင်း
         if [ -f "WG_Tunnel.zip" ]; then
           cp WG_Tunnel.zip WireSock.zip
-          echo "WireSock.zip created from WG_Tunnel.zip"
+          echo "Syncing WireSock.zip with latest configs..."
         fi
 
     - name: Upload Artifacts (Download ဆွဲရန်)
@@ -49,13 +49,13 @@ jobs:
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         
-        # Zip ဖိုင်အားလုံး (WG_Tunnel နှင့် WireSock) ကို Repo ထဲ သိမ်းမယ်
-        git add *.zip 2>/dev/null || true
+        # Zip ဖိုင်အားလုံးကို Repo ထဲ သိမ်းမယ်
+        git add WG_Tunnel.zip WireSock.zip 2>/dev/null || true
         
         if git diff --staged --quiet; then
           echo "No changes to commit"
         else
-          git commit -m "🔄 Update WireSock & WG configs [$(date -u)]"
+          git commit -m "🔄 Update WireSock & WG_Tunnel [$(date -u)]"
           git pull --rebase
           git push
         fi
