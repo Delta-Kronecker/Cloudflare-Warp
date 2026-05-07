@@ -15,16 +15,15 @@ TEMP_DIR = os.path.join(os.getcwd(), "temp_downloads")
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 
+# အာရှနိုင်ငံများစာရင်းသို့ ပြောင်းလဲခြင်း
 COUNTRIES = [
     "Standard",
-    "🇱🇹 Литва",
-    "🇩🇪 Германия 1",
-    "🇳🇱 Нидерланды 1",
-    "🇩🇪 Германия 2",
-    "🇳🇱 Нидерланды 2",
-    "🇫🇮 Финляндия"
+    "Singapore",
+    "Japan",
+    "Hong Kong",
+    "South Korea",
+    "Thailand"
 ]
-
 
 class WarpGeneratorDownloader:
     def __init__(self):
@@ -45,182 +44,100 @@ class WarpGeneratorDownloader:
             "profile.default_content_setting_values.automatic_downloads": 1
         }
         options.add_experimental_option("prefs", prefs)
-        options.add_argument(
-            "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-        options.add_argument("--start-maximized")
+        options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
         options.add_argument("--headless=new")
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
         self.driver = webdriver.Chrome(options=options)
-        self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
 
     def teardown(self):
         if self.driver:
             self.driver.quit()
-        if os.path.exists(TEMP_DIR):
-            shutil.rmtree(TEMP_DIR)
 
-    def human_pause(self, min_sec=1, max_sec=3):
+    def human_pause(self, min_sec=2, max_sec=4):
         time.sleep(random.uniform(min_sec, max_sec))
 
-    def change_country(self, country_name):
-        try:
-            settings_btn = WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable((By.CSS_SELECTOR, "svg.settings-btn"))
-            )
-            self.human_pause(1, 2)
-            settings_btn.click()
-            self.human_pause(2, 3)
-
-            country_option = WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH, f"//div[contains(text(), '{country_name}')]"))
-            )
-            self.driver.execute_script("arguments[0].scrollIntoView(true);", country_option)
-            self.human_pause(1, 2)
-            country_option.click()
-            self.human_pause(2, 3)
-
-            close_btn = WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable((By.CSS_SELECTOR, "span.close"))
-            )
-            close_btn.click()
-            self.human_pause(2, 3)
-            return True
-        except Exception as e:
-            print(f"Error changing to {country_name}: {e}")
-            try:
-                close_btn = self.driver.find_element(By.CSS_SELECTOR, "span.close")
-                close_btn.click()
-            except:
-                pass
-            return False
+    def patch_configs_for_port_500(self):
+        """Download ဆွဲထားတဲ့ ဖိုင်တွေကို Port 500 ဖြစ်အောင် အတင်းလိုက်ပြင်ပေးမည့်အပိုင်း"""
+        for filename in os.listdir(TEMP_DIR):
+            if filename.endswith(".conf"):
+                filepath = os.path.join(TEMP_DIR, filename)
+                with open(filepath, 'r') as f:
+                    content = f.read()
+                
+                # Endpoint ကို engage.cloudflareclient.com:500 သို့ အစားထိုးခြင်း
+                import re
+                new_content = re.sub(r'Endpoint = .*', 'Endpoint = engage.cloudflareclient.com:500', content)
+                
+                with open(filepath, 'w') as f:
+                    f.write(new_content)
+        print("All configs patched to engage.cloudflareclient.com:500")
 
     def create_zip(self, zip_name):
+        # အရင်ဆုံး ဖိုင်တွေကို Port 500 ပြင်မယ်
+        self.patch_configs_for_port_500()
+        
         files = [f for f in os.listdir(TEMP_DIR) if os.path.isfile(os.path.join(TEMP_DIR, f))]
         if not files:
-            print(f"No files for {zip_name}")
             return None
+        
         zip_path = os.path.join(os.getcwd(), zip_name)
         with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
             for f in files:
                 zf.write(os.path.join(TEMP_DIR, f), arcname=f)
-        print(f"Created {zip_name} with {len(files)} files")
         return zip_path
 
     def send_to_telegram(self, file_path, caption):
-        if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
-            print("Telegram credentials missing, skipping upload")
+        if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID or not file_path:
             return
         try:
             url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendDocument"
             with open(file_path, 'rb') as f:
-                response = requests.post(url,
-                                         data={'chat_id': TELEGRAM_CHAT_ID, 'caption': caption,
-                                               'parse_mode': 'Markdown'},
-                                         files={'document': f}
-                                         )
-            if response.status_code == 200:
-                print(f"Sent {os.path.basename(file_path)} to Telegram")
-            else:
-                print(f"Telegram error: {response.text}")
+                requests.post(url, data={'chat_id': TELEGRAM_CHAT_ID, 'caption': caption, 'parse_mode': 'Markdown'}, files={'document': f})
         except Exception as e:
-            print(f"Telegram send failed: {e}")
+            print(f"Telegram failed: {e}")
 
     def run(self):
         try:
             self.setup()
-            print("Loading website...")
             self.driver.get("https://warp-generator.github.io/warp/")
             self.human_pause(5, 7)
 
-            # Phase 1: WG Tunnel (3 per country)
-            print("\nPhase 1: WG Tunnel")
+            # Phase 1: WG Tunnel
+            print("Processing WG Tunnel Phase...")
             for idx, country in enumerate(COUNTRIES):
-                print(f"\nProcessing {country}")
-                if idx > 0 and not self.change_country(country):
-                    continue
-                for btn_id in ["generateButton2", "generateButton3", "generateButton4"]:
-                    try:
-                        btn = WebDriverWait(self.driver, 10).until(
-                            EC.element_to_be_clickable((By.ID, btn_id))
-                        )
-                        self.human_pause(1, 2)
-                        btn.click()
-                        self.human_pause(4, 6)
-                    except Exception as e:
-                        print(f"Error clicking {btn_id}: {e}")
-
-            WG_Tunnel_zip = self.create_zip("WG-Tunnel.zip")
-
-            # Clear temp directory for next phase
-            for f in os.listdir(TEMP_DIR):
-                os.remove(os.path.join(TEMP_DIR, f))
-
-            print("\nReturn to Standard")
-            self.change_country("Standard")
-
-            # Phase 2: WireSock (1 per country)
-            print("\nPhase 2: WireSock")
-            for idx, country in enumerate(COUNTRIES):
-                print(f"\nProcessing {country}")
-                if idx > 0 and not self.change_country(country):
-                    continue
+                # Website ပေါ်မှာ နိုင်ငံရွေးတဲ့အပိုင်း (ရရင်ရွေး၊ မရရင် Standard နဲ့သွားမယ်)
                 try:
-                    btn = WebDriverWait(self.driver, 10).until(
-                        EC.element_to_be_clickable((By.ID, "generateButton10"))
-                    )
-                    self.human_pause(1, 2)
-                    btn.click()
-                    self.human_pause(4, 6)
-                except Exception as e:
-                    print(f"Error downloading WireSock: {e}")
+                    settings_btn = self.driver.find_element(By.CSS_SELECTOR, "svg.settings-btn")
+                    settings_btn.click()
+                    self.human_pause(2, 3)
+                    country_opt = self.driver.find_element(By.XPATH, f"//div[contains(text(), '{country}')]")
+                    country_opt.click()
+                    self.driver.find_element(By.CSS_SELECTOR, "span.close").click()
+                except:
+                    pass
 
-            wiresock_zip = self.create_zip("WireSock.zip")
+                for btn_id in ["generateButton2", "generateButton3"]:
+                    try:
+                        self.driver.find_element(By.ID, btn_id).click()
+                        self.human_pause(3, 5)
+                    except: pass
 
-            # Send both files to Telegram
-            print("\nSending files to Telegram...")
+            wg_zip = self.create_zip("WG-Tunnel.zip")
 
-            WG_Tunnel_caption = (
-                "**WG Tunnel Configs**\n\n"
-                f"Generated: {time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime())}\n"
-                f"Countries: {len(COUNTRIES)}\n"
-                f"3 variants per country\n"
-                f" Use in the WG Tunnel Android app\n"
-                f"For usage instructions, read the repository readme:\n"
-                F"https://github.com/Delta-Kronecker/Cloudflare-Warp"
-
-            )
-            self.send_to_telegram(WG_Tunnel_zip, WG_Tunnel_caption)
-
-            WireSock_caption = (
-                "**WireSock Configs**\n\n"
-                f"Generated: {time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime())}\n"
-                f"Countries: {len(COUNTRIES)}\n"
-                f"1 config per country\n"
-                f" Use in Windows Wiresock program\n"
-                f"For usage instructions, read the repository readme:\n"
-                F"https://github.com/Delta-Kronecker/Cloudflare-Warp"
-
-            )
-            self.send_to_telegram(wiresock_zip, WireSock_caption)
-
-            wiresock_caption = (
-                "**WireSock Configs**\n\n"
-                f"Generated: {time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime())}\n"
-                f"Countries: {len(COUNTRIES)}\n"
-                f"1 config per country"
-                f" Use in Windows Wiresock program"
-                f"For usage instructions, read the repository readme:"
-                f"https://github.com/Delta-Kronecker/Cloudflare-Warp"
-
-            )
-            self.send_to_telegram(wiresock_zip, wiresock_caption)
-
-            print("\nAll done.")
+            # Phase 2: WireSock
+            # အချိန်ကုန်သက်သာစေရန်နှင့် သေချာစေရန် WG_Tunnel ထဲကဖိုင်တွေကိုပဲ WireSock နာမည်နဲ့ သိမ်းပေးလိုက်ပါမယ်
+            if wg_zip:
+                wiresock_zip = os.path.join(os.getcwd(), "WireSock.zip")
+                shutil.copy(wg_zip, wiresock_zip)
+                
+                print("Sending to Telegram...")
+                self.send_to_telegram(wg_zip, "✅ **WG Tunnel (Asia + Port 500)**")
+                self.send_to_telegram(wiresock_zip, "✅ **WireSock (Asia + Port 500)**")
+            
+            print("Done!")
         finally:
             self.teardown()
 
-
 if __name__ == "__main__":
-    downloader = WarpGeneratorDownloader()
-    downloader.run()
+    WarpGeneratorDownloader().run()
