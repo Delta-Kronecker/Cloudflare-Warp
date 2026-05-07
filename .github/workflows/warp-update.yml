@@ -21,8 +21,13 @@ jobs:
       with:
         python-version: '3.9'
 
+    - name: Install Chrome and Driver (အသစ်ထည့်ထားသည်)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y google-chrome-stable
+
     - name: Install dependencies
-      run: pip install selenium requests
+      run: pip install selenium requests webdriver-manager
 
     - name: Run downloader script
       env:
@@ -35,11 +40,13 @@ jobs:
         git config --global user.name "GitHub Action Bot"
         git config --global user.email "action@github.com"
         
-        if [ -f "WG_Tunnel.zip" ] || [ -f "WireSock.zip" ]; then
-          git add WG_Tunnel.zip WireSock.zip 2>/dev/null || true
-          git commit -m "🔄 Update WARP configs [$(date -u)]" || echo "No changes to commit"
-          git pull
-          git push
+        # ရှိသမျှ zip အကုန်ပေါင်းထည့်ရန်
+        git add *.zip 2>/dev/null || true
+        
+        if git diff --staged --quiet; then
+          echo "No zip files created or no changes"
         else
-          echo "No zip files created"
+          git commit -m "🔄 Update WARP configs [$(date -u)]"
+          git pull --rebase
+          git push
         fi
