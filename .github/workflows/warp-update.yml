@@ -22,25 +22,33 @@ jobs:
         python-version: '3.9'
 
     - name: Install dependencies
-      run: pip install requests
+      run: pip install selenium requests
 
     - name: Run downloader script
+      env:
+        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
       run: python warp_downloader.py
 
-    - name: Upload Artifacts
+    - name: Upload Artifacts (ဖုန်းထဲ တိုက်ရိုက် Download ဆွဲရန်)
       uses: actions/upload-artifact@v4
       with:
-        name: WARP-Configs
+        name: WARP-Configs-Download
         path: "*.zip"
+        if-no-files-found: warn
 
     - name: Commit and push zip files
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
-        git add *.zip
+        
+        # ရှိသမျှ zip ဖိုင်မှန်သမျှ Repo ထဲ သိမ်းရန်
+        git add *.zip 2>/dev/null || true
+        
         if git diff --staged --quiet; then
           echo "No changes to commit"
         else
-          git commit -m "🔄 Update configs [$(date -u)]"
+          git commit -m "🔄 Update WARP configs [$(date -u)]"
+          git pull --rebase
           git push
         fi
