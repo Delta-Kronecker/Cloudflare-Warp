@@ -50,7 +50,7 @@ jobs:
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         
         # Zip ဖိုင်အားလုံးကို Repo ထဲ သိမ်းမယ်
-        git add WG_Tunnel.zip WireSock.zip 2>/dev/null || true
+        git add WG-Tunnel.zip WireSock.zip 2>/dev/null || true
         
         if git diff --staged --quiet; then
           echo "No changes to commit"
