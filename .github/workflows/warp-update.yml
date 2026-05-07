@@ -30,25 +30,32 @@ jobs:
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
       run: python warp_downloader.py
 
-    - name: Upload Artifacts (ဖုန်းထဲ တိုက်ရိုက် Download ဆွဲရန်)
+    - name: Create WireSock.zip (WG_Tunnel ကို နာမည်ပွားယူခြင်း)
+      run: |
+        # တကယ်လို့ script က WG_Tunnel.zip ပဲ ထုတ်ပေးတယ်ဆိုရင် WireSock အဖြစ်ပါ ပွားလိုက်မယ်
+        if [ -f "WG_Tunnel.zip" ]; then
+          cp WG_Tunnel.zip WireSock.zip
+          echo "WireSock.zip created from WG_Tunnel.zip"
+        fi
+
+    - name: Upload Artifacts (Download ဆွဲရန်)
       uses: actions/upload-artifact@v4
       with:
-        name: WARP-Configs-Download
+        name: All-WARP-Configs
         path: "*.zip"
-        if-no-files-found: warn
 
     - name: Commit and push zip files
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         
-        # ရှိသမျှ zip ဖိုင်မှန်သမျှ Repo ထဲ သိမ်းရန်
+        # Zip ဖိုင်အားလုံး (WG_Tunnel နှင့် WireSock) ကို Repo ထဲ သိမ်းမယ်
         git add *.zip 2>/dev/null || true
         
         if git diff --staged --quiet; then
           echo "No changes to commit"
         else
-          git commit -m "🔄 Update WARP configs [$(date -u)]"
+          git commit -m "🔄 Update WireSock & WG configs [$(date -u)]"
           git pull --rebase
           git push
         fi
