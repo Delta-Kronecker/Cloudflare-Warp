@@ -1,3 +1,4 @@
+# پروژه نیاز به اپدیت دارد فعلا کار نمی کند
 # 🔥 Cloudflare WARP Config Generator
 
 This project automatically downloads and updates Cloudflare WARP configuration files for different protocols and countries. It runs daily via GitHub Actions and pushes the updated configs to this repository and Telegram.
